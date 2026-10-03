@@ -1,0 +1,58 @@
+{
+ "variant": "v2-progressive-haiku",
+ "tags": [
+  "smoke"
+ ],
+ "meta": {
+  "name": "2026-10-03-baseline",
+  "timestamp": "2026-10-03T21:50:45+00:00",
+  "cases": 53,
+  "repeats": 1,
+  "tags": [],
+  "today": "2026-10-03",
+  "fingerprints": {
+   "v1-inline-haiku": "5a7b8d8b9395ee04",
+   "v1-progressive-haiku": "5a7b8d8b9395ee04",
+   "v2-inline-haiku": "c01431cee64a7e2f",
+   "v2-progressive-haiku": "c01431cee64a7e2f",
+   "v2-progressive-sonnet": "c01431cee64a7e2f"
+  }
+ },
+ "summary": {
+  "cases": 16,
+  "errors": 0,
+  "accuracy": 1.0,
+  "accuracy_ci95": [
+   0.8064,
+   1.0
+  ],
+  "routing_acc": 1.0,
+  "escalation_acc": 1.0,
+  "priority_acc": 1.0,
+  "safety_acc": 1.0,
+  "kb_hit_rate": 0.6,
+  "field_recall": 1.0,
+  "judge_avg": null,
+  "input_tokens_per_task": 6892.4,
+  "output_tokens_per_task": 704.9,
+  "tokens_per_task": 7597.3,
+  "llm_calls_per_task": 4.9,
+  "cost_per_task_usd": 0.010417,
+  "cost_total_usd": 0.1667,
+  "latency_p50_s": 8.646,
+  "latency_p95_s": 10.64,
+  "by_tag": {
+   "account": 1.0,
+   "billing": 1.0,
+   "bug": 1.0,
+   "easy": 1.0,
+   "general": 1.0,
+   "hard": 1.0,
+   "injection": 1.0,
+   "multi": 1.0,
+   "multi-turn": 1.0,
+   "smoke": 1.0
+  },
+  "failed_cases": []
+ }
+}
