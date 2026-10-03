@@ -10,7 +10,7 @@ from mcp.server.fastmcp import FastMCP
 
 from .tools_impl import get_backend
 
-mcp = FastMCP("player-support-tools")
+mcp = FastMCP("player-support-tools", log_level="WARNING")
 
 
 @mcp.tool()

@@ -15,6 +15,7 @@ from pydantic import BaseModel
 T = TypeVar("T", bound=BaseModel)
 
 DEFAULT_MODEL = "claude-haiku-4-5-20251001"
+FIXED_TEMPERATURE_MODELS = ("claude-sonnet-5", "claude-opus-5", "claude-fable-5")
 
 # USD per million tokens: (input, output, cache_write_5m, cache_read).
 # Source: https://platform.claude.com/docs/en/about-claude/pricing (checked 2026-10-03).
@@ -104,7 +105,8 @@ def make_chat_model(model: str, temperature: float | None = 0.0, max_tokens: int
     from langchain_anthropic import ChatAnthropic
 
     kwargs = {"model": model, "max_tokens": max_tokens, "max_retries": 4}
-    if temperature is not None:
+    # Claude 5-generation models only accept the default temperature.
+    if temperature is not None and not model.startswith(FIXED_TEMPERATURE_MODELS):
         kwargs["temperature"] = temperature
     if headers := anthropic_headers():
         kwargs["default_headers"] = headers

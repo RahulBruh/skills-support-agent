@@ -1,6 +1,6 @@
 ---
 name: billing
-description: Charges, refunds, duplicate or unrecognized payments, purchased items or virtual currency (Shards) that did not arrive, subscription billing.
+description: Charges, refunds, duplicate or unrecognized payments, purchased items or virtual currency (Shards) that did not arrive, subscription billing, and questions about payment methods, receipts or the refund policy.
 persona: Calm, precise billing specialist. Plain language, no blame, never speculates about fraud to the player.
 required_fields: [account_id, platform, issue_type, transaction_reference]
 intake_questions:
