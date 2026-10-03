@@ -19,7 +19,7 @@ From [eval run 2026-10-03](https://github.com/RahulBruh/agent-eval-harness/tree/
 | Cost per task | $0.0292 | **$0.0102 (−65%)** |
 | p50 latency | 8.7s | 9.2s |
 
-**Extensibility:** the connectivity domain was added in [a4aa6fc](https://github.com/RahulBruh/skills-support-agent/commit/a4aa6fc): `1 file changed, 25 insertions(+)`, all in `skills/connectivity/SKILL.md`, with no Python changes.
+**Extensibility:** the connectivity domain was added in [55b990c](https://github.com/RahulBruh/skills-support-agent/commit/55b990c): `1 file changed, 25 insertions(+)`, all in `skills/connectivity/SKILL.md`, with no Python changes.
 
 See the harness README for the ablation, the routing regression the evals caught, and the limitations.
 
