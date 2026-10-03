@@ -40,13 +40,13 @@ escalation_rules:
     in the service status or the knowledge base that explains the crash, you must escalate the case.
 priority_rules:
   P1: >-
-    Priority 1 is the most urgent priority. Use it for exploits that affect the game economy, or for
-    widespread crashes where there is no known issue.
+    Priority 1 is the most urgent priority. Use it for exploits that affect the game economy.
   P2: >-
-    Priority 2 is high priority. Use it when the player has lost progress, items or currency.
+    Priority 2 is high priority. Use it when the player has lost progress, items or currency, and also when
+    the game crashes on launch and there is no known issue that explains the crash.
   P3: >-
-    Priority 3 is normal priority. Use it for bugs that affect gameplay but where there is already a known issue
-    or a workaround available.
+    Priority 3 is normal priority. Use it for all other bugs that affect gameplay, such as crashes, freezes or
+    controls that don't work, regardless of whether there is already a known issue or a workaround.
   P4: >-
     Priority 4 is low priority. Use it for cosmetic bugs or other minor issues that do not really affect the
     player's ability to play the game.

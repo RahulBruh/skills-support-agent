@@ -14,9 +14,9 @@ escalation_rules:
   - Exploit that lets players gain items/currency (e.g. duplication) → escalate.
   - Crash on launch with no known issue listed → escalate.
 priority_rules:
-  P1: Exploit affecting the economy, or a widespread crash with no known issue.
-  P2: Progress, item or currency loss.
-  P3: Gameplay-affecting bug with a known issue or workaround.
+  P1: Exploit affecting the economy.
+  P2: Progress, item or currency loss, or crash on launch with no known issue.
+  P3: Other gameplay-affecting bug (crashes, freezes, broken controls), known issue or not.
   P4: Cosmetic or minor bug.
 ---
 

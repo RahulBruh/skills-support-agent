@@ -37,7 +37,13 @@ escalation_rules:
   - >-
     If the player reports that there are two or more charges on their account that they do not recognize and
     did not make, you must escalate the case, because this could be a sign that the account has been
-    compromised by someone else who is making purchases with it.
+    compromised by someone else who is making purchases with it. You must also escalate if the player does
+    not recognize even a single charge but their account has the `login_from_new_country` or
+    `recent_email_change` flag, because together these strongly suggest the account has been compromised.
+  - >-
+    If the player made a purchase that shows as completed in their purchase history, but the item or
+    virtual currency they paid for was never delivered to their account, you must escalate the case so that
+    the billing team can investigate and deliver the missing item.
   - >-
     If the player reports a duplicate charge, and you are able to confirm by looking at their purchase history
     that the same item really was charged twice, you must escalate the case to the billing team so that they
@@ -58,11 +64,11 @@ priority_rules:
     Priority 2 is high priority. Use it when the player was charged but the item or virtual currency they paid
     for is missing from their account, or when a duplicate charge has been confirmed in the purchase history.
   P3: >-
-    Priority 3 is normal priority. Use it when the player is requesting a refund that falls within the refund
-    policy and there are no other complicating factors.
+    Priority 3 is normal priority. Use it when the player is requesting a refund, regardless of whether the
+    refund request falls inside or outside of the refund policy.
   P4: >-
     Priority 4 is low priority. Use it for general billing questions that do not involve any money being lost
-    or at risk, such as questions about how billing works.
+    or at risk, such as questions about how billing works, and for questions about pending charges.
 ---
 
 ## Detailed billing rules and guidance
@@ -95,7 +101,7 @@ purchased item is missing from the player's account, in which case the other rul
 
 Sometimes a charge will show as "pending" in the purchase history. Pending charges are normal and usually
 settle, or disappear, within 3 to 5 business days. If the player is asking about a pending charge, explain this
-to them and refer them to knowledge base article KB-102. You should not escalate pending charges.
+to them and refer them to knowledge base article KB-102. You should not escalate pending charges, and they should be given priority 4.
 
 ### Security
 

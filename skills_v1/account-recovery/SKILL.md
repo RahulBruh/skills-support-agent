@@ -51,7 +51,8 @@ priority_rules:
     Priority 3 is normal priority. Use it for suspension or ban appeals.
   P4: >-
     Priority 4 is low priority. Use it for forgotten passwords where the player can reset their password
-    themselves using the self-service password reset.
+    themselves using the self-service password reset, and for players who have lost their two-factor
+    authentication device but still have their backup codes, because they can also fix this themselves.
 ---
 
 ## Detailed account recovery rules and guidance

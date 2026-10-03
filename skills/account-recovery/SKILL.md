@@ -16,7 +16,7 @@ priority_rules:
   P1: Compromise or suspected takeover.
   P2: Locked out due to lost 2FA without backup codes.
   P3: Suspension or ban appeal.
-  P4: Forgotten password / self-serve reset.
+  P4: Self-serve fixes (forgotten password, or lost 2FA with backup codes).
 ---
 
 ## Rules
