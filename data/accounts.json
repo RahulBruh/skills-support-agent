@@ -1,0 +1,71 @@
+[
+  {
+    "account_id": "ACC-1001", "email": "maya.r@example.com", "display_name": "MayaR", "platform": "PC",
+    "status": "active", "region": "NA", "flags": [], "two_factor": {"enabled": true, "backup_codes_remaining": 8},
+    "purchases": [
+      {"order_id": "ORD-50011", "item": "1000 Shards", "amount_usd": 9.99, "date": "2026-09-28T14:02:11Z", "store": "PC", "status": "completed", "delivered": true, "used": false},
+      {"order_id": "ORD-50012", "item": "1000 Shards", "amount_usd": 9.99, "date": "2026-09-28T14:02:13Z", "store": "PC", "status": "completed", "delivered": true, "used": false},
+      {"order_id": "ORD-49870", "item": "Season Pass S7", "amount_usd": 19.99, "date": "2026-08-10T09:15:00Z", "store": "PC", "status": "completed", "delivered": true, "used": true}
+    ]
+  },
+  {
+    "account_id": "ACC-1002", "email": "jordan.k@example.com", "display_name": "JKay", "platform": "PlayStation",
+    "status": "active", "region": "NA", "flags": [], "two_factor": {"enabled": false, "backup_codes_remaining": 0},
+    "purchases": [
+      {"order_id": "ORD-50101", "item": "Ultimate Edition Upgrade", "amount_usd": 39.99, "date": "2026-09-30T20:44:00Z", "store": "PlayStation", "status": "completed", "delivered": false, "used": false}
+    ]
+  },
+  {
+    "account_id": "ACC-1003", "email": "priya.s@example.com", "display_name": "PriyaPlays", "platform": "PC",
+    "status": "active", "region": "EU", "flags": ["login_from_new_country", "recent_email_change"],
+    "two_factor": {"enabled": false, "backup_codes_remaining": 0},
+    "purchases": [
+      {"order_id": "ORD-50200", "item": "5000 Shards", "amount_usd": 49.99, "date": "2026-10-01T03:10:00Z", "store": "PC", "status": "completed", "delivered": true, "used": true},
+      {"order_id": "ORD-50201", "item": "5000 Shards", "amount_usd": 49.99, "date": "2026-10-01T03:12:00Z", "store": "PC", "status": "completed", "delivered": true, "used": true},
+      {"order_id": "ORD-50202", "item": "Legendary Bundle", "amount_usd": 24.99, "date": "2026-10-01T03:15:00Z", "store": "PC", "status": "completed", "delivered": true, "used": true}
+    ]
+  },
+  {
+    "account_id": "ACC-1004", "email": "sam.t@example.com", "display_name": "SamT", "platform": "Xbox",
+    "status": "active", "region": "NA", "flags": [], "two_factor": {"enabled": true, "backup_codes_remaining": 4},
+    "purchases": [
+      {"order_id": "ORD-50300", "item": "Velocity Kart Turbo Pack", "amount_usd": 14.99, "date": "2026-10-02T18:30:00Z", "store": "Xbox", "status": "pending", "delivered": false, "used": false}
+    ]
+  },
+  {
+    "account_id": "ACC-1005", "email": "alex.m@example.com", "display_name": "AlexM", "platform": "PC",
+    "status": "suspended", "suspension": {"reason": "Use of unauthorized third-party software", "since": "2026-09-20", "ends": "2026-10-20"},
+    "region": "NA", "flags": [], "two_factor": {"enabled": true, "backup_codes_remaining": 10}, "purchases": []
+  },
+  {
+    "account_id": "ACC-1006", "email": "chris.l@example.com", "display_name": "ChrisL", "platform": "Switch",
+    "status": "active", "region": "APAC", "flags": [], "two_factor": {"enabled": true, "backup_codes_remaining": 0}, "purchases": []
+  },
+  {
+    "account_id": "ACC-1007", "email": "dana.w@example.com", "display_name": "DanaW", "platform": "PC",
+    "status": "active", "region": "NA", "flags": [], "two_factor": {"enabled": true, "backup_codes_remaining": 6},
+    "purchases": [
+      {"order_id": "ORD-50400", "item": "Founders Collection", "amount_usd": 129.99, "date": "2026-09-29T12:00:00Z", "store": "PC", "status": "completed", "delivered": true, "used": false},
+      {"order_id": "ORD-48000", "item": "2500 Shards", "amount_usd": 24.99, "date": "2026-08-01T12:00:00Z", "store": "PC", "status": "completed", "delivered": true, "used": true}
+    ]
+  },
+  {
+    "account_id": "ACC-1008", "email": "lee.h@example.com", "display_name": "LeeH", "platform": "Mobile",
+    "status": "active", "region": "NA", "flags": [], "two_factor": {"enabled": false, "backup_codes_remaining": 0},
+    "purchases": [
+      {"order_id": "ORD-50500", "item": "Starter Pack", "amount_usd": 4.99, "date": "2026-09-30T08:00:00Z", "store": "iOS App Store", "status": "completed", "delivered": true, "used": false}
+    ]
+  },
+  {
+    "account_id": "ACC-1009", "email": "riley.p@example.com", "display_name": "RileyP", "platform": "PC",
+    "status": "active", "region": "EU", "flags": [], "two_factor": {"enabled": true, "backup_codes_remaining": 3},
+    "purchases": [
+      {"order_id": "ORD-50600", "item": "1000 Shards", "amount_usd": 9.99, "date": "2026-09-25T16:20:00Z", "store": "PC", "status": "completed", "delivered": true, "used": false}
+    ]
+  },
+  {
+    "account_id": "ACC-1010", "email": "casey.b@example.com", "display_name": "CaseyB", "platform": "PlayStation",
+    "status": "active", "region": "EU", "flags": ["login_from_new_country"], "two_factor": {"enabled": false, "backup_codes_remaining": 0},
+    "purchases": []
+  }
+]

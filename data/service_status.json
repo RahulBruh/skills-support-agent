@@ -1,0 +1,23 @@
+{
+  "as_of": "2026-10-03T12:00:00Z",
+  "games": {
+    "Starfall Arena": {
+      "status": "degraded",
+      "known_issues": [
+        {"id": "SA-7.2-LOCKER", "platforms": ["PlayStation"], "summary": "Game crashes when opening the Locker after patch 7.2.", "kb": "KB-302", "workaround": "Clear the game cache from the title screen settings."}
+      ]
+    },
+    "Velocity Kart": {
+      "status": "degraded",
+      "known_issues": [
+        {"id": "VK-EU-MM", "platforms": ["PC", "PlayStation", "Xbox", "Switch"], "regions": ["EU"], "summary": "Matchmaking delays and mid-race disconnects on EU servers.", "kb": "KB-402", "workaround": "None; engineers are investigating."}
+      ]
+    },
+    "Kingdoms of Ash": {
+      "status": "operational",
+      "known_issues": [
+        {"id": "KOA-SW-TEX", "platforms": ["Switch"], "summary": "Some armor textures appear blurry or missing in docked mode.", "kb": "KB-303", "workaround": "Cosmetic only; fix planned."}
+      ]
+    }
+  }
+}
