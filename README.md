@@ -79,22 +79,25 @@ export ANTHROPIC_API_KEY=...            # an org-level key also needs ANTHROPIC_
 uv run support-agent skills list        # what's loaded
 uv run support-agent skills validate    # schema + tool allow-list checks
 uv run support-agent chat               # interactive triage
-uv run support-agent run "I was charged twice for 1000 Shards" \
-    --followup "maya.r@example.com, PC, Sept 28" --json
+uv run support-agent run "I was charged twice for 1000 Shards on Sept 28. My account is maya.r@example.com and I play on PC."
 ```
 
-Example output (real run):
+Real output for eval case `bill-01` (Haiku 4.5):
 
 ```
-Agent: Your purchase history shows two identical charges for 1000 Shards on Sept 28
-(orders ORD-50011 and ORD-50012, both $9.99). I'm escalating this to our billing team...
+Agent: I found the issue. Your purchase history shows two identical charges for 1000 Shards
+on Sept 28 (orders ORD-50011 and ORD-50012, both $9.99). I'm escalating this to our billing
+team to process a reversal for the duplicate charge. You should hear back within 1-2 business days.
 ───────────────────────────── Triage ─────────────────────────────
-skill     billing (confidence 0.95)
+skill     billing (confidence 0.99)
 priority  P2
-escalate  True (Duplicate charge confirmed in purchase history)
+escalate  True (Confirmed duplicate charge in purchase history (ORD-50011 and ORD-50012)
+          requires billing team reversal.)
 tools     get_purchase_history
 usage     7674 in / 723 out, 5 calls, $0.0113, 8.9s
 ```
+
+The decision is correct, but the reply invents a "1–2 business days" SLA that appears nowhere in the skill or the data. That's a known gap: the deterministic scorers grade the *decision*, and the optional LLM judge in the harness is the tool for catching this kind of reply-quality problem.
 
 **Use the MCP server elsewhere.** `python -m support_agent.mcp_server` speaks MCP over stdio, so Claude Desktop, Claude Code or any MCP client can use the same five tools: `lookup_ticket`, `get_account_status`, `get_purchase_history`, `search_kb` and `get_service_status`.
 
