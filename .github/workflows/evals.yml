@@ -1,0 +1,53 @@
+name: Evals
+
+# Runs the smoke eval set against this PR's skills and code, and blocks the merge if accuracy
+# drops or tokens/task grow beyond tolerance vs baselines/smoke-baseline.json.
+on:
+  pull_request:
+    paths: ["skills/**", "src/**", "data/**", "baselines/**"]
+  workflow_dispatch:
+
+jobs:
+  eval-gate:
+    runs-on: ubuntu-latest
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: RahulBruh/agent-eval-harness
+          path: harness
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Skip (no API key secret, e.g. fork PR)
+        if: env.ANTHROPIC_API_KEY == ''
+        run: echo "::warning::ANTHROPIC_API_KEY not available; eval gate skipped."
+
+      - name: Install harness with this PR's agent
+        if: env.ANTHROPIC_API_KEY != ''
+        working-directory: harness
+        run: |
+          uv sync
+          uv pip install -e ..   # override the pinned git dependency with the PR checkout
+
+      - name: Run smoke evals
+        if: env.ANTHROPIC_API_KEY != ''
+        working-directory: harness
+        run: >
+          uv run --no-sync evalh run --variant v2-progressive-haiku --tag smoke
+          --out results/pr --no-cache
+
+      - name: Regression gate
+        if: env.ANTHROPIC_API_KEY != ''
+        working-directory: harness
+        run: >
+          uv run --no-sync evalh gate results/pr/results.json
+          --baseline ../baselines/smoke-baseline.json
+          --max-accuracy-drop 0.10 --max-token-increase 0.25
+
+      - uses: actions/upload-artifact@v4
+        if: always() && env.ANTHROPIC_API_KEY != ''
+        with:
+          name: eval-report
+          path: harness/results/pr/

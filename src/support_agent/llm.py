@@ -5,6 +5,7 @@ The graph only depends on the ``LLM`` protocol, so tests can swap in a scripted 
 
 from __future__ import annotations
 
+import os
 from typing import Protocol, TypeVar
 
 from langchain_core.messages import AIMessage, BaseMessage, SystemMessage
@@ -93,10 +94,18 @@ class AnthropicLLM:
         return msg
 
 
+def anthropic_headers() -> dict[str, str]:
+    """Org-level API keys must name a workspace; workspace-scoped keys need nothing."""
+    ws = os.environ.get("ANTHROPIC_WORKSPACE_ID")
+    return {"anthropic-workspace-id": ws} if ws else {}
+
+
 def make_chat_model(model: str, temperature: float | None = 0.0, max_tokens: int = 1024):
     from langchain_anthropic import ChatAnthropic
 
     kwargs = {"model": model, "max_tokens": max_tokens, "max_retries": 4}
     if temperature is not None:
         kwargs["temperature"] = temperature
+    if headers := anthropic_headers():
+        kwargs["default_headers"] = headers
     return ChatAnthropic(**kwargs)
