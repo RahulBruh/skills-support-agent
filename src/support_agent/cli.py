@@ -34,6 +34,9 @@ SkillsDir = Annotated[
     str | None, typer.Option(help="Skills directory (path or name, e.g. skills_v1).")
 ]
 Mode = Annotated[str, typer.Option(help="Context loading: progressive | inline_all.")]
+MetricsOpt = Annotated[
+    bool, typer.Option("--metrics", help="Publish per-skill metrics to CloudWatch.")
+]
 BackendOpt = Annotated[
     str,
     typer.Option("--backend", help="Tool data source: json | dynamodb | api (deployed Lambdas)."),
@@ -46,6 +49,7 @@ def _config(
     context_mode: str,
     backend: str = "json",
     provider: str = "anthropic",
+    metrics: bool = False,
 ) -> AgentConfig:
     if context_mode not in ("progressive", "inline_all"):
         raise typer.BadParameter("context-mode must be 'progressive' or 'inline_all'")
@@ -59,6 +63,7 @@ def _config(
         context_mode=context_mode,
         backend=backend,
         provider=provider,
+        metrics=metrics,
     )
 
 
@@ -69,6 +74,7 @@ def chat(
     context_mode: Mode = "progressive",
     backend: BackendOpt = "json",
     provider: Provider = "anthropic",
+    metrics: MetricsOpt = False,
 ):
     """Interactive triage: describe a problem; the agent asks follow-ups, then decides."""
 
@@ -78,7 +84,7 @@ def chat(
 
     async def main():
         async with SupportAgent(
-            _config(model, skills_dir, context_mode, backend, provider)
+            _config(model, skills_dir, context_mode, backend, provider, metrics)
         ) as agent:
             names = ", ".join(agent.skills)
             console.print(f"[dim]Loaded skills: {names}. Empty reply skips a question.[/]")
@@ -101,6 +107,7 @@ def run(
     context_mode: Mode = "progressive",
     backend: BackendOpt = "json",
     provider: Provider = "anthropic",
+    metrics: MetricsOpt = False,
     as_json: Annotated[
         bool, typer.Option("--json", help="Print the full TriageResult as JSON.")
     ] = False,
@@ -109,7 +116,7 @@ def run(
 
     async def main():
         async with SupportAgent(
-            _config(model, skills_dir, context_mode, backend, provider)
+            _config(model, skills_dir, context_mode, backend, provider, metrics)
         ) as agent:
             return await agent.triage(message, followups=followup or [])
 

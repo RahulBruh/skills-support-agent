@@ -6,6 +6,7 @@ async with SupportAgent(AgentConfig(model="claude-haiku-4-5-20251001")) as agent
 
 from __future__ import annotations
 
+import asyncio
 import os
 import sys
 import time
@@ -33,6 +34,7 @@ class AgentConfig:
     context_mode: ContextMode = "progressive"
     provider: str = "anthropic"  # anthropic | bedrock: where Claude is called
     backend: str = "json"  # json | dynamodb | api: where the MCP tools read their data
+    metrics: bool = False  # publish per-skill metrics to CloudWatch (namespace SupportAgent)
     max_intake_turns: int = 2
     max_tool_rounds: int = 4
     temperature: float | None = 0.0
@@ -54,6 +56,11 @@ class SupportAgent:
         self._llm_factory = llm_factory
         self._tools = tools
         self._stack: AsyncExitStack | None = None
+        self._metrics = None
+        if self.config.metrics:
+            from .aws.metrics import CloudWatchMetrics
+
+            self._metrics = CloudWatchMetrics(self.config.provider)
         self.graph = build_graph()
 
     async def __aenter__(self) -> SupportAgent:
@@ -100,13 +107,20 @@ class SupportAgent:
             max_tool_rounds=self.config.max_tool_rounds,
         )
         start = time.perf_counter()
-        state = await self.graph.ainvoke(
-            {"messages": [HumanMessage(message)], "intake_turns": 0},
-            config={"configurable": {"rt": rt}, "recursion_limit": 25},
-        )
+        try:
+            state = await self.graph.ainvoke(
+                {"messages": [HumanMessage(message)], "intake_turns": 0},
+                config={"configurable": {"rt": rt}, "recursion_limit": 25},
+            )
+        except Exception:
+            if self._metrics:
+                await asyncio.to_thread(
+                    self._metrics.record_error, None, time.perf_counter() - start
+                )
+            raise
         latency = time.perf_counter() - start
         d = state["decision"]
-        return TriageResult(
+        result = TriageResult(
             skill=state["skill"],
             route_confidence=state["route_confidence"],
             route_reason=state["route_reason"],
@@ -128,6 +142,9 @@ class SupportAgent:
             context_mode=self.config.context_mode,
             skills_dir=self.skills_dir.name,
         )
+        if self._metrics:
+            await asyncio.to_thread(self._metrics.record, result)
+        return result
 
 
 async def run_triage(message: str, config: AgentConfig | None = None, **kw) -> TriageResult:

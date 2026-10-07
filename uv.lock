@@ -1772,7 +1772,7 @@ provides-extras = ["aws"]
 [package.metadata.requires-dev]
 dev = [
     { name = "boto3", specifier = ">=1.35" },
-    { name = "moto", extras = ["dynamodb"], specifier = ">=5" },
+    { name = "moto", extras = ["cloudwatch", "dynamodb"], specifier = ">=5" },
     { name = "pytest", specifier = ">=8" },
     { name = "pytest-asyncio", specifier = ">=0.23" },
     { name = "ruff", specifier = ">=0.6" },

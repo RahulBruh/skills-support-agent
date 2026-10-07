@@ -27,7 +27,7 @@ aws = [
 [dependency-groups]
 dev = [
     "boto3>=1.35",
-    "moto[dynamodb]>=5",
+    "moto[cloudwatch,dynamodb]>=5",
     "pytest>=8",
     "pytest-asyncio>=0.23",
     "ruff>=0.6",

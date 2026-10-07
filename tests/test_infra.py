@@ -76,3 +76,26 @@ def test_no_wildcard_dynamodb_actions(template):
         for s in _policy_for(template, tool):
             actions = s["Action"] if isinstance(s["Action"], list) else [s["Action"]]
             assert not any(a in ("*", "dynamodb:*") for a in actions), tool
+
+
+def test_alarms_per_skill_and_per_tool(template):
+    from support_agent.paths import default_skills_dir
+    from support_agent.skills import load_skills
+
+    names = {
+        a["Properties"]["AlarmName"]
+        for a in template.find_resources("AWS::CloudWatch::Alarm").values()
+    }
+    for skill in load_skills(default_skills_dir()):
+        assert {f"t-{skill}-error-rate", f"t-{skill}-latency-p90"} <= names
+    for tool in TOOL_ACCESS:
+        assert f"t-tool-{tool}-errors" in names
+    assert "t-api-5xx" in names
+    template.resource_count_is("AWS::CloudWatch::Dashboard", 1)
+
+
+def test_client_policy_metrics_scoped_to_namespace(template):
+    policy = next(iter(template.find_resources("AWS::IAM::ManagedPolicy").values()))
+    statements = policy["Properties"]["PolicyDocument"]["Statement"]
+    put = next(s for s in statements if s["Action"] == "cloudwatch:PutMetricData")
+    assert put["Condition"] == {"StringEquals": {"cloudwatch:namespace": "SupportAgent"}}
