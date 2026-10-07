@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from collections.abc import Callable
 
 import pytest
@@ -49,3 +50,30 @@ def local_tools() -> list[StructuredTool]:
             "get_service_status",
         )
     ]
+
+
+TEST_TABLE_PREFIX = "test"
+
+
+@pytest.fixture
+def dynamo_db():
+    """Mocked DynamoDB (moto) with every table created and seeded from data/."""
+    boto3 = pytest.importorskip("boto3")
+    moto = pytest.importorskip("moto")
+    from support_agent.aws.dynamo import TABLES, create_table_kwargs, seed
+
+    os.environ.setdefault("AWS_DEFAULT_REGION", "us-east-1")
+    with moto.mock_aws():
+        db = boto3.resource("dynamodb", region_name="us-east-1")
+        for entity in TABLES:
+            db.create_table(**create_table_kwargs(entity, TEST_TABLE_PREFIX))
+        counts = seed(TEST_TABLE_PREFIX, resource=db)
+        assert counts["accounts"] == 10 and counts["kb"] == 14
+        yield db
+
+
+@pytest.fixture
+def dynamo(dynamo_db):
+    from support_agent.aws.dynamo import DynamoBackend
+
+    return DynamoBackend(TEST_TABLE_PREFIX, resource=dynamo_db)

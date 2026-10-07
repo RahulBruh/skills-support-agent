@@ -32,6 +32,10 @@ dev = [
     "pytest-asyncio>=0.23",
     "ruff>=0.6",
 ]
+infra = [
+    "aws-cdk-lib>=2.200",
+    "constructs>=10",
+]
 
 [build-system]
 requires = ["hatchling"]

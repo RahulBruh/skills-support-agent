@@ -31,7 +31,7 @@ class AgentConfig:
     skills_dir: str | Path | None = None  # path, or a name like "skills_v1"
     data_dir: str | Path | None = None
     context_mode: ContextMode = "progressive"
-    backend: str = "json"  # json | dynamodb: where the MCP tools read their data
+    backend: str = "json"  # json | dynamodb | api: where the MCP tools read their data
     max_intake_turns: int = 2
     max_tool_rounds: int = 4
     temperature: float | None = 0.0

@@ -11,10 +11,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: uv sync
+      - uses: actions/setup-node@v4  # the CDK (jsii) runtime needs Node
+        with:
+          node-version: 22
+      - run: uv sync --group infra
       - name: Lint
         run: uv run ruff check . && uv run ruff format --check .
       - name: Validate skills
         run: uv run support-agent skills validate && uv run support-agent skills validate --skills-dir skills_v1
-      - name: Unit + MCP integration tests (no API key needed)
-        run: uv run pytest -q
+      - name: Unit, MCP, moto and CDK tests (no API key or AWS account needed)
+        run: uv run --group infra pytest -q
