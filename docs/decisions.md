@@ -54,3 +54,9 @@ Short ADR-style records (architecture decision records) of the choices that shap
 **Context.** Running Claude through Amazon Bedrock keeps inference inside the AWS account: IAM auth instead of an API key, and CloudTrail and billing alongside the tools.
 **Decision.** `--provider bedrock` swaps the SDK client inside the existing LangChain `ChatAnthropic` for the official `AnthropicBedrockMantle` client (the Messages API on Bedrock). Model IDs map to `anthropic.<model>`. The graph, tool binding, structured output and usage accounting are untouched.
 **Consequence.** The same eval cases can benchmark both providers by changing a single config value. Bedrock is priced by AWS, so costs reported for Bedrock runs use first-party rates and are labeled as an estimate.
+
+## ADR-10: CI reaches AWS through OIDC, and eval results become time series
+
+**Context.** The PR gate catches large regressions on a single run. It cannot show slow drift, and long-lived AWS keys in GitHub secrets are a standing liability.
+**Decision.** GitHub Actions assumes a role through GitHub's OIDC provider. The trust policy pins exact `sub` claims (harness `main`; this repo's PRs and `main`), and the role can only write under `runs/` in one bucket and publish to one metrics namespace. Every eval run, pass or fail, is uploaded to S3 and pushed to CloudWatch (`AgentEvals`) per variant. A dashboard plots accuracy, cost, tokens and latency over 90 days.
+**Consequence.** No AWS secrets exist anywhere. Regressions show up as a trend before they trip the gate's tolerance, and a full report for every historical run stays in S3. The same role can later run the gate's evals on Bedrock, which would remove the Anthropic API key secret too.
