@@ -31,6 +31,7 @@ class AgentConfig:
     skills_dir: str | Path | None = None  # path, or a name like "skills_v1"
     data_dir: str | Path | None = None
     context_mode: ContextMode = "progressive"
+    provider: str = "anthropic"  # anthropic | bedrock: where Claude is called
     backend: str = "json"  # json | dynamodb | api: where the MCP tools read their data
     max_intake_turns: int = 2
     max_tool_rounds: int = 4
@@ -57,7 +58,9 @@ class SupportAgent:
 
     async def __aenter__(self) -> SupportAgent:
         if self._llm_factory is None:
-            chat = make_chat_model(self.config.model, self.config.temperature)
+            chat = make_chat_model(
+                self.config.model, self.config.temperature, provider=self.config.provider
+            )
             self._llm_factory = lambda: AnthropicLLM(chat)
         if self._tools is None:
             self._stack = AsyncExitStack()
@@ -121,6 +124,7 @@ class SupportAgent:
             cost_usd=llm.usage.cost_usd(self.config.model),
             latency_s=round(latency, 3),
             model=self.config.model,
+            provider=self.config.provider,
             context_mode=self.config.context_mode,
             skills_dir=self.skills_dir.name,
         )

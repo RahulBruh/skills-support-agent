@@ -48,3 +48,9 @@ Short ADR-style records (architecture decision records) of the choices that shap
 **Context.** ADR-4 restricts which tools each *skill* can call, but that check lives inside the engine. A bug or a prompt injection that gets past it would still reach every table.
 **Decision.** Each tool is its own Lambda behind an IAM-authorized HTTP API, with its own role. Roles are generated from `support_agent/aws/access.py`. Tools that only need to resolve an email or ID to `account_id` (purchases, tickets) get `GetItem` on accounts restricted to that one attribute (`dynamodb:Attributes`), plus the `KEYS_ONLY` email index. The MCP server stays the protocol layer: `--backend api` makes it proxy each call over SigV4.
 **Consequence.** Defense in depth. The engine decides which tools a skill may call, and IAM decides what data each tool can touch. A test records every DynamoDB call under moto and fails if any call falls outside its tool's policy *or* if a grant goes unused, so the policies cannot silently widen. The cost is one cold start per tool, and an extra network hop compared to the in-process `dynamodb` backend, which is kept for local use.
+
+## ADR-9: Bedrock as a provider switch, not a second code path
+
+**Context.** Running Claude through Amazon Bedrock keeps inference inside the AWS account: IAM auth instead of an API key, and CloudTrail and billing alongside the tools.
+**Decision.** `--provider bedrock` swaps the SDK client inside the existing LangChain `ChatAnthropic` for the official `AnthropicBedrockMantle` client (the Messages API on Bedrock). Model IDs map to `anthropic.<model>`. The graph, tool binding, structured output and usage accounting are untouched.
+**Consequence.** The same eval cases can benchmark both providers by changing a single config value. Bedrock is priced by AWS, so costs reported for Bedrock runs use first-party rates and are labeled as an estimate.

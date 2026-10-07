@@ -54,5 +54,6 @@ class TriageResult(BaseModel):
     cost_usd: float | None
     latency_s: float
     model: str
+    provider: str = "anthropic"
     context_mode: str
     skills_dir: str
