@@ -41,7 +41,9 @@ To turn it on, set these **repository variables** (not secrets) in both repos fr
 
 ## Deploy
 
-Prerequisites: the AWS CLI with credentials (`aws sts get-caller-identity` works), Node 18+ and uv.
+Prerequisites: the AWS CLI with credentials (`aws sts get-caller-identity` works), Node 18+ and uv. Use an IAM admin user or role, not the root user. `aws login` sessions work with the `aws` extra, which includes `botocore[crt]`.
+
+For `--provider bedrock`, submit the one-time **Anthropic use-case form** in the Bedrock console (Model catalog, then any Claude model) for the account. Until it's submitted, Bedrock returns `403 ... is not available for this account`.
 
 ```bash
 cd infra
