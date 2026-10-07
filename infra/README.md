@@ -50,7 +50,7 @@ uv run --extra aws support-agent run --backend dynamodb "..."   # direct to Dyna
 
 ## Cost
 
-Everything is pay-per-request with no idle cost apart from CloudWatch log storage. At demo volumes (a few hundred tool calls a day) the stack stays inside the free tier.
+DynamoDB, Lambda and API Gateway are pay-per-request, and at demo volumes (a few hundred tool calls a day) they stay inside the free tier. The fixed cost is monitoring: CloudWatch bills standard alarms beyond the first 10 (this stack has 20: 2 per skill, 2 per tool, 2 for the API), and dashboards beyond the first 3, plus a small charge for custom metrics. Expect a few dollars a month; check current rates at https://aws.amazon.com/cloudwatch/pricing/. `cdk destroy` removes all of it.
 
 ## Tear down
 
