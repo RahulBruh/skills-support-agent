@@ -18,15 +18,27 @@ from aws_cdk import aws_logs as logs
 from aws_cdk.aws_apigatewayv2_authorizers import HttpIamAuthorizer
 from aws_cdk.aws_apigatewayv2_integrations import HttpLambdaIntegration
 from constructs import Construct
+from monitoring import Monitoring
 
 from support_agent.aws.access import TOOL_ACCESS, Access
 from support_agent.aws.dynamo import TABLES, table_name
+from support_agent.aws.metrics import NAMESPACE
+from support_agent.paths import default_skills_dir
+from support_agent.skills import load_skills
 
 SRC = Path(__file__).resolve().parents[1] / "src"
 
 
 class SupportAgentStack(Stack):
-    def __init__(self, scope: Construct, cid: str, *, prefix: str = "support-agent", **kw):
+    def __init__(
+        self,
+        scope: Construct,
+        cid: str,
+        *,
+        prefix: str = "support-agent",
+        alarm_email: str | None = None,
+        **kw,
+    ):
         super().__init__(scope, cid, **kw)
         Tags.of(self).add("project", "skills-support-agent")
         self.prefix = prefix
@@ -42,22 +54,44 @@ class SupportAgentStack(Stack):
 
         self.api = self._api()
 
+        self.monitoring = Monitoring(
+            self,
+            "Monitoring",
+            prefix=prefix,
+            skills=sorted(load_skills(default_skills_dir())),
+            functions=self.functions,
+            api=self.api,
+            alarm_email=alarm_email,
+        )
+
         # Attach this to whatever runs the agent (a user, a CI role) instead of admin rights.
         self.client_policy = iam.ManagedPolicy(
             self,
             "ToolsClientPolicy",
-            description="Invoke the support-agent tool API (and nothing else).",
+            description="Call the support-agent tool API and publish its metrics (nothing else).",
             statements=[
                 iam.PolicyStatement(
                     actions=["execute-api:Invoke"],
                     resources=[self.api.arn_for_execute_api("POST", "/tools/*")],
-                )
+                ),
+                iam.PolicyStatement(
+                    actions=["cloudwatch:PutMetricData"],
+                    resources=["*"],  # PutMetricData has no resource ARNs; scoped by namespace
+                    conditions={"StringEquals": {"cloudwatch:namespace": NAMESPACE}},
+                ),
             ],
         )
 
         CfnOutput(self, "ApiUrl", value=self.api.api_endpoint)
         CfnOutput(self, "TablePrefix", value=prefix)
         CfnOutput(self, "ClientPolicyArn", value=self.client_policy.managed_policy_arn)
+        CfnOutput(self, "AlarmTopicArn", value=self.monitoring.topic.topic_arn)
+        CfnOutput(
+            self,
+            "DashboardUrl",
+            value=f"https://{self.region}.console.aws.amazon.com/cloudwatch/home?region="
+            f"{self.region}#dashboards/dashboard/{prefix}-operations",
+        )
 
     # -- tables -------------------------------------------------------------------------------
     def _table(self, entity: str) -> ddb.Table:
