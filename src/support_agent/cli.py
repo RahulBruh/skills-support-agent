@@ -31,7 +31,10 @@ SkillsDir = Annotated[
     str | None, typer.Option(help="Skills directory (path or name, e.g. skills_v1).")
 ]
 Mode = Annotated[str, typer.Option(help="Context loading: progressive | inline_all.")]
-BackendOpt = Annotated[str, typer.Option("--backend", help="Tool data source: json | dynamodb.")]
+BackendOpt = Annotated[
+    str,
+    typer.Option("--backend", help="Tool data source: json | dynamodb | api (deployed Lambdas)."),
+]
 
 
 def _config(

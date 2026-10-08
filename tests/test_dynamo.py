@@ -1,28 +1,10 @@
 """DynamoBackend against moto: same answers as JsonBackend for every tool."""
 
-import os
-
 import pytest
 
+from support_agent.tools_impl import JsonBackend
+
 boto3 = pytest.importorskip("boto3")
-moto = pytest.importorskip("moto")
-
-from support_agent.aws.dynamo import TABLES, DynamoBackend, create_table_kwargs, seed  # noqa: E402
-from support_agent.tools_impl import JsonBackend  # noqa: E402
-
-PREFIX = "test"
-
-
-@pytest.fixture
-def dynamo():
-    os.environ.setdefault("AWS_DEFAULT_REGION", "us-east-1")
-    with moto.mock_aws():
-        db = boto3.resource("dynamodb", region_name="us-east-1")
-        for entity in TABLES:
-            db.create_table(**create_table_kwargs(entity, PREFIX))
-        counts = seed(PREFIX, resource=db)
-        assert counts["accounts"] == 10 and counts["kb"] == 14
-        yield DynamoBackend(PREFIX, resource=db)
 
 
 def _by_order(out: dict) -> dict:

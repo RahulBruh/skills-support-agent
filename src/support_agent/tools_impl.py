@@ -1,8 +1,9 @@
 """Plain-Python implementations of the shared support tools.
 
-These are wrapped as MCP tools in ``mcp_server.py`` .
+These are wrapped as MCP tools in ``mcp_server.py`` and as Lambda handlers in ``aws/lambdas.py``.
 The tool logic lives in ``Backend``; subclasses differ only in where the data comes from:
 ``JsonBackend`` (local files) or ``DynamoBackend`` (DynamoDB, in ``aws/dynamo.py``).
+``ApiBackend`` (``aws/http.py``) offers the same tool methods by calling the deployed Lambdas.
 """
 
 from __future__ import annotations
@@ -192,7 +193,7 @@ def _mask_email(email: str) -> str:
     return f"{user[0]}***@{domain}"
 
 
-BACKENDS = ("json", "dynamodb")
+BACKENDS = ("json", "dynamodb", "api")
 
 
 @lru_cache(maxsize=4)
@@ -205,4 +206,8 @@ def get_backend(kind: str | None = None) -> Backend:
         from .aws.dynamo import DynamoBackend
 
         return DynamoBackend()
+    if kind == "api":
+        from .aws.http import ApiBackend
+
+        return ApiBackend()
     raise ValueError(f"Unknown backend {kind!r}; expected one of {BACKENDS}")
