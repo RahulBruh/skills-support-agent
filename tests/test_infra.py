@@ -99,3 +99,63 @@ def test_client_policy_metrics_scoped_to_namespace(template):
     statements = policy["Properties"]["PolicyDocument"]["Statement"]
     put = next(s for s in statements if s["Action"] == "cloudwatch:PutMetricData")
     assert put["Condition"] == {"StringEquals": {"cloudwatch:namespace": "SupportAgent"}}
+
+
+@pytest.fixture(scope="module")
+def ci_template() -> Template:
+    from ci_stack import CiStack
+
+    return Template.from_stack(CiStack(cdk.App(), "TestCi", prefix="t"))
+
+
+def test_ci_role_trusts_only_the_eval_workflows(ci_template):
+    roles = ci_template.find_resources(
+        "AWS::IAM::Role", {"Properties": {"RoleName": "t-github-evals"}}
+    )
+    role = next(iter(roles.values()))
+    stmt = role["Properties"]["AssumeRolePolicyDocument"]["Statement"][0]
+    assert stmt["Action"] == "sts:AssumeRoleWithWebIdentity"
+    cond = stmt["Condition"]
+    assert cond["StringEquals"] == {"token.actions.githubusercontent.com:aud": "sts.amazonaws.com"}
+    subs = cond["StringLike"]["token.actions.githubusercontent.com:sub"]
+    assert subs == [
+        "repo:RahulBruh/agent-eval-harness:ref:refs/heads/main",
+        "repo:RahulBruh/skills-support-agent:pull_request",
+        "repo:RahulBruh/skills-support-agent:ref:refs/heads/main",
+    ]
+
+
+def test_ci_role_can_only_write_results_and_eval_metrics(ci_template):
+    role_id = next(
+        iter(
+            ci_template.find_resources(
+                "AWS::IAM::Role", {"Properties": {"RoleName": "t-github-evals"}}
+            )
+        )
+    )
+    policies = ci_template.find_resources(
+        "AWS::IAM::Policy", {"Properties": {"Roles": [{"Ref": role_id}]}}
+    )
+    statements = [
+        s for p in policies.values() for s in p["Properties"]["PolicyDocument"]["Statement"]
+    ]
+    assert sorted(s["Action"] for s in statements) == ["cloudwatch:PutMetricData", "s3:PutObject"]
+    put = next(s for s in statements if s["Action"] == "s3:PutObject")
+    assert "/runs/*" in json.dumps(put["Resource"])
+
+
+def test_results_bucket_is_private_and_tls_only(ci_template):
+    ci_template.has_resource_properties(
+        "AWS::S3::Bucket",
+        {
+            "PublicAccessBlockConfiguration": {
+                "BlockPublicAcls": True,
+                "BlockPublicPolicy": True,
+                "IgnorePublicAcls": True,
+                "RestrictPublicBuckets": True,
+            }
+        },
+    )
+    policy = next(iter(ci_template.find_resources("AWS::S3::BucketPolicy").values()))
+    deny = policy["Properties"]["PolicyDocument"]["Statement"][0]
+    assert deny["Effect"] == "Deny" and deny["Condition"]["Bool"]["aws:SecureTransport"] == "false"

@@ -7,11 +7,17 @@ on:
     paths: ["skills/**", "src/**", "data/**", "baselines/**"]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  id-token: write # GitHub OIDC -> AWS (see infra/README.md, "CI")
+
 jobs:
   eval-gate:
     runs-on: ubuntu-latest
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      AWS_ROLE: ${{ vars.AWS_EVAL_ROLE_ARN }}
+      EVALH_RESULTS_BUCKET: ${{ vars.EVALH_RESULTS_BUCKET }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
@@ -28,8 +34,8 @@ jobs:
         if: env.ANTHROPIC_API_KEY != ''
         working-directory: harness
         run: |
-          uv sync
-          uv pip install -e ..   # override the pinned git dependency with the PR checkout
+          uv sync --extra aws
+          uv pip install -e ..[aws]   # override the pinned git dependency with the PR checkout
 
       - name: Run smoke evals
         if: env.ANTHROPIC_API_KEY != ''
@@ -45,6 +51,22 @@ jobs:
           uv run --no-sync evalh gate results/pr/results.json
           --baseline ../baselines/smoke-baseline.json
           --max-accuracy-drop 0.10 --max-token-increase 0.25
+
+      # Publish even when the gate fails, so regressions land on the trend line too.
+      - name: AWS credentials via OIDC
+        if: always() && env.AWS_ROLE != '' && env.ANTHROPIC_API_KEY != ''
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_ROLE }}
+          role-session-name: eval-gate-${{ github.run_id }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Publish run to S3 and CloudWatch
+        if: always() && env.AWS_ROLE != '' && hashFiles('harness/results/pr/results.json') != ''
+        working-directory: harness
+        run: >
+          uv run --no-sync evalh publish results/pr --source agent-pr
+          --run-id "pr-${{ github.event.pull_request.number || 'manual' }}-${{ github.run_id }}"
 
       - uses: actions/upload-artifact@v4
         if: always() && env.ANTHROPIC_API_KEY != ''

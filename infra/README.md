@@ -28,14 +28,27 @@ flowchart LR
 
 Adding a `SKILL.md` and redeploying gives the new skill its own dashboard lines and alarms, with no code changes. The `ClientPolicyArn` policy can publish metrics only to the `SupportAgent` namespace.
 
+## CI (`SupportAgentCi` stack)
+
+GitHub Actions authenticates to AWS with **OIDC**, so no AWS keys are stored in GitHub. `ci_stack.py` creates:
+
+- **The GitHub OIDC provider.** If the account already has one, pass `-c github_oidc_provider_arn=...`.
+- **The `<prefix>-github-evals` role.** Only these workflows can assume it: the harness's manual runs on `main`, and this repo's eval gate on pull requests and manual `main` runs. It can do two things: `s3:PutObject` under `runs/` in the results bucket, and `cloudwatch:PutMetricData` to the `AgentEvals` namespace.
+- **A private, TLS-only results bucket.** It is retained when the stack is deleted, so eval history survives a teardown.
+- **The `<prefix>-evals` dashboard.** It plots accuracy, cost per task, tokens per task and p50 latency over 90 days, one line per variant. A `SEARCH` expression picks up new variants automatically.
+
+To turn it on, set these **repository variables** (not secrets) in both repos from the stack outputs: `AWS_EVAL_ROLE_ARN`, `EVALH_RESULTS_BUCKET`, and optionally `AWS_REGION`. Each eval run is then published with `evalh publish`. In this repo that happens even when the gate fails, so regressions show up on the trend line.
+
 ## Deploy
 
-Prerequisites: the AWS CLI with credentials (`aws sts get-caller-identity` works), Node 18+ and uv.
+Prerequisites: the AWS CLI with credentials (`aws sts get-caller-identity` works), Node 18+ and uv. Use an IAM admin user or role, not the root user. `aws login` sessions work with the `aws` extra, which includes `botocore[crt]`.
+
+For `--provider bedrock`, submit the one-time **Anthropic use-case form** in the Bedrock console (Model catalog, then any Claude model) for the account. Until it's submitted, Bedrock returns `403 ... is not available for this account`.
 
 ```bash
 cd infra
 npx aws-cdk@2 bootstrap          # once per account/region
-npx aws-cdk@2 deploy -c alarm_email=you@example.com   # prints ApiUrl, DashboardUrl, ...
+npx aws-cdk@2 deploy --all -c alarm_email=you@example.com   # both stacks; prints the outputs
 cd ..
 uv run --extra aws support-agent aws seed    # load data/ into the tables
 ```
@@ -55,7 +68,7 @@ DynamoDB, Lambda and API Gateway are pay-per-request, and at demo volumes (a few
 ## Tear down
 
 ```bash
-cd infra && npx aws-cdk@2 destroy   # tables and log groups are deleted too (demo data)
+cd infra && npx aws-cdk@2 destroy --all   # tables and logs are deleted; the eval results bucket is kept
 ```
 
 ## Tests
