@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.table import Table
 
 from .api import AgentConfig, SupportAgent
-from .llm import DEFAULT_MODEL
+from .llm import DEFAULT_MODEL, PROVIDERS
 from .models import TriageResult
 from .paths import resolve_skills_dir
 from .skills import validate_skills
@@ -26,7 +26,10 @@ for _stream in (sys.stdout, sys.stderr):
         _stream.reconfigure(encoding="utf-8", errors="replace")
 console = Console()
 
-Model = Annotated[str, typer.Option(help="Anthropic model ID.")]
+Model = Annotated[str, typer.Option(help="Claude model ID (first-party form).")]
+Provider = Annotated[
+    str, typer.Option(help="Where Claude runs: anthropic (API key) | bedrock (AWS credentials).")
+]
 SkillsDir = Annotated[
     str | None, typer.Option(help="Skills directory (path or name, e.g. skills_v1).")
 ]
@@ -38,14 +41,24 @@ BackendOpt = Annotated[
 
 
 def _config(
-    model: str, skills_dir: str | None, context_mode: str, backend: str = "json"
+    model: str,
+    skills_dir: str | None,
+    context_mode: str,
+    backend: str = "json",
+    provider: str = "anthropic",
 ) -> AgentConfig:
     if context_mode not in ("progressive", "inline_all"):
         raise typer.BadParameter("context-mode must be 'progressive' or 'inline_all'")
+    if provider not in PROVIDERS:
+        raise typer.BadParameter(f"provider must be one of {', '.join(PROVIDERS)}")
     if backend not in BACKENDS:
         raise typer.BadParameter(f"backend must be one of {', '.join(BACKENDS)}")
     return AgentConfig(
-        model=model, skills_dir=skills_dir, context_mode=context_mode, backend=backend
+        model=model,
+        skills_dir=skills_dir,
+        context_mode=context_mode,
+        backend=backend,
+        provider=provider,
     )
 
 
@@ -55,6 +68,7 @@ def chat(
     skills_dir: SkillsDir = None,
     context_mode: Mode = "progressive",
     backend: BackendOpt = "json",
+    provider: Provider = "anthropic",
 ):
     """Interactive triage: describe a problem; the agent asks follow-ups, then decides."""
 
@@ -63,7 +77,9 @@ def chat(
         return console.input("[bold green]You:[/] ").strip() or None
 
     async def main():
-        async with SupportAgent(_config(model, skills_dir, context_mode, backend)) as agent:
+        async with SupportAgent(
+            _config(model, skills_dir, context_mode, backend, provider)
+        ) as agent:
             names = ", ".join(agent.skills)
             console.print(f"[dim]Loaded skills: {names}. Empty reply skips a question.[/]")
             message = console.input("[bold green]You:[/] ")
@@ -84,6 +100,7 @@ def run(
     skills_dir: SkillsDir = None,
     context_mode: Mode = "progressive",
     backend: BackendOpt = "json",
+    provider: Provider = "anthropic",
     as_json: Annotated[
         bool, typer.Option("--json", help="Print the full TriageResult as JSON.")
     ] = False,
@@ -91,7 +108,9 @@ def run(
     """Single-shot triage of MESSAGE."""
 
     async def main():
-        async with SupportAgent(_config(model, skills_dir, context_mode, backend)) as agent:
+        async with SupportAgent(
+            _config(model, skills_dir, context_mode, backend, provider)
+        ) as agent:
             return await agent.triage(message, followups=followup or [])
 
     result = asyncio.run(main())

@@ -18,6 +18,8 @@ DEFAULT_MODEL = "claude-haiku-4-5-20251001"
 FIXED_TEMPERATURE_MODELS = ("claude-sonnet-5", "claude-opus-5", "claude-fable-5")
 
 # USD per million tokens: (input, output, cache_write_5m, cache_read).
+# First-party API rates. Bedrock is priced by AWS (https://aws.amazon.com/bedrock/pricing/); runs
+# with provider="bedrock" are costed at these rates as an estimate.
 # Source: https://platform.claude.com/docs/en/about-claude/pricing (checked 2026-10-03).
 PRICING: dict[str, tuple[float, float, float, float]] = {
     "claude-haiku-4-5": (1.0, 5.0, 1.25, 0.10),
@@ -101,13 +103,29 @@ def anthropic_headers() -> dict[str, str]:
     return {"anthropic-workspace-id": ws} if ws else {}
 
 
-def make_chat_model(model: str, temperature: float | None = 0.0, max_tokens: int = 1024):
-    from langchain_anthropic import ChatAnthropic
+PROVIDERS = ("anthropic", "bedrock")
 
+
+def make_chat_model(
+    model: str,
+    temperature: float | None = 0.0,
+    max_tokens: int = 1024,
+    provider: str = "anthropic",
+):
+    """``provider="bedrock"`` calls the same model on Amazon Bedrock with AWS credentials."""
+    if provider not in PROVIDERS:
+        raise ValueError(f"Unknown provider {provider!r}; expected one of {PROVIDERS}")
     kwargs = {"model": model, "max_tokens": max_tokens, "max_retries": 4}
     # Claude 5-generation models only accept the default temperature.
     if temperature is not None and not model.startswith(FIXED_TEMPERATURE_MODELS):
         kwargs["temperature"] = temperature
+    if provider == "bedrock":
+        from .aws.bedrock import ChatAnthropicBedrock, bedrock_model_id
+
+        return ChatAnthropicBedrock(**{**kwargs, "model": bedrock_model_id(model)})
+
+    from langchain_anthropic import ChatAnthropic
+
     if headers := anthropic_headers():
         kwargs["default_headers"] = headers
     return ChatAnthropic(**kwargs)
