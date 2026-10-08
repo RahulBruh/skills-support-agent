@@ -31,6 +31,7 @@ class AgentConfig:
     skills_dir: str | Path | None = None  # path, or a name like "skills_v1"
     data_dir: str | Path | None = None
     context_mode: ContextMode = "progressive"
+    backend: str = "json"  # json | dynamodb: where the MCP tools read their data
     max_intake_turns: int = 2
     max_tool_rounds: int = 4
     temperature: float | None = 0.0
@@ -60,7 +61,9 @@ class SupportAgent:
             self._llm_factory = lambda: AnthropicLLM(chat)
         if self._tools is None:
             self._stack = AsyncExitStack()
-            self._tools = await self._stack.enter_async_context(_mcp_tools(self.data_dir))
+            self._tools = await self._stack.enter_async_context(
+                _mcp_tools(self.data_dir, self.config.backend)
+            )
         return self
 
     async def __aexit__(self, *exc) -> None:
@@ -141,8 +144,9 @@ def _scripted(replies: list[str]) -> ReplyProvider:
 class _mcp_tools:
     """Start the MCP server over stdio once and keep the session open for many triages."""
 
-    def __init__(self, data_dir: Path):
+    def __init__(self, data_dir: Path, backend: str = "json"):
         self.data_dir = data_dir
+        self.backend = backend
 
     async def __aenter__(self) -> list[BaseTool]:
         from langchain_mcp_adapters.client import MultiServerMCPClient
@@ -154,7 +158,11 @@ class _mcp_tools:
                     "transport": "stdio",
                     "command": sys.executable,
                     "args": ["-m", "support_agent.mcp_server"],
-                    "env": {**os.environ, "SUPPORT_AGENT_DATA": str(self.data_dir)},
+                    "env": {
+                        **os.environ,
+                        "SUPPORT_AGENT_DATA": str(self.data_dir),
+                        "SUPPORT_AGENT_BACKEND": self.backend,
+                    },
                 }
             }
         )

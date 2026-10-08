@@ -7,7 +7,7 @@ from langchain_core.messages import AIMessage
 from langchain_core.tools import StructuredTool
 
 from support_agent.llm import Usage
-from support_agent.tools_impl import Backend
+from support_agent.tools_impl import JsonBackend
 
 
 class FakeLLM:
@@ -38,7 +38,7 @@ def tool_call(name: str, **args) -> AIMessage:
 @pytest.fixture
 def local_tools() -> list[StructuredTool]:
     """The same tools the MCP server exposes, wrapped in-process (no subprocess)."""
-    b = Backend()
+    b = JsonBackend()
     return [
         StructuredTool.from_function(getattr(b, name), name=name, description=name)
         for name in (

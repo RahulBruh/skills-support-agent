@@ -14,10 +14,13 @@ from .llm import DEFAULT_MODEL
 from .models import TriageResult
 from .paths import resolve_skills_dir
 from .skills import validate_skills
+from .tools_impl import BACKENDS
 
 app = typer.Typer(help="Skills-driven player-support triage agent.", no_args_is_help=True)
 skills_app = typer.Typer(help="Inspect and validate SKILL.md files.", no_args_is_help=True)
 app.add_typer(skills_app, name="skills")
+aws_app = typer.Typer(help="Manage the AWS deployment's data.", no_args_is_help=True)
+app.add_typer(aws_app, name="aws")
 for _stream in (sys.stdout, sys.stderr):
     if hasattr(_stream, "reconfigure"):  # Windows consoles default to cp1252
         _stream.reconfigure(encoding="utf-8", errors="replace")
@@ -28,17 +31,27 @@ SkillsDir = Annotated[
     str | None, typer.Option(help="Skills directory (path or name, e.g. skills_v1).")
 ]
 Mode = Annotated[str, typer.Option(help="Context loading: progressive | inline_all.")]
+BackendOpt = Annotated[str, typer.Option("--backend", help="Tool data source: json | dynamodb.")]
 
 
-def _config(model: str, skills_dir: str | None, context_mode: str) -> AgentConfig:
+def _config(
+    model: str, skills_dir: str | None, context_mode: str, backend: str = "json"
+) -> AgentConfig:
     if context_mode not in ("progressive", "inline_all"):
         raise typer.BadParameter("context-mode must be 'progressive' or 'inline_all'")
-    return AgentConfig(model=model, skills_dir=skills_dir, context_mode=context_mode)
+    if backend not in BACKENDS:
+        raise typer.BadParameter(f"backend must be one of {', '.join(BACKENDS)}")
+    return AgentConfig(
+        model=model, skills_dir=skills_dir, context_mode=context_mode, backend=backend
+    )
 
 
 @app.command()
 def chat(
-    model: Model = DEFAULT_MODEL, skills_dir: SkillsDir = None, context_mode: Mode = "progressive"
+    model: Model = DEFAULT_MODEL,
+    skills_dir: SkillsDir = None,
+    context_mode: Mode = "progressive",
+    backend: BackendOpt = "json",
 ):
     """Interactive triage: describe a problem; the agent asks follow-ups, then decides."""
 
@@ -47,7 +60,7 @@ def chat(
         return console.input("[bold green]You:[/] ").strip() or None
 
     async def main():
-        async with SupportAgent(_config(model, skills_dir, context_mode)) as agent:
+        async with SupportAgent(_config(model, skills_dir, context_mode, backend)) as agent:
             names = ", ".join(agent.skills)
             console.print(f"[dim]Loaded skills: {names}. Empty reply skips a question.[/]")
             message = console.input("[bold green]You:[/] ")
@@ -67,6 +80,7 @@ def run(
     model: Model = DEFAULT_MODEL,
     skills_dir: SkillsDir = None,
     context_mode: Mode = "progressive",
+    backend: BackendOpt = "json",
     as_json: Annotated[
         bool, typer.Option("--json", help="Print the full TriageResult as JSON.")
     ] = False,
@@ -74,7 +88,7 @@ def run(
     """Single-shot triage of MESSAGE."""
 
     async def main():
-        async with SupportAgent(_config(model, skills_dir, context_mode)) as agent:
+        async with SupportAgent(_config(model, skills_dir, context_mode, backend)) as agent:
             return await agent.triage(message, followups=followup or [])
 
     result = asyncio.run(main())
@@ -112,6 +126,19 @@ def validate(skills_dir: SkillsDir = None):
     if errors:
         raise typer.Exit(1)
     console.print(f"[green]OK[/] {len(skills)} skills valid in {path}: {', '.join(skills)}")
+
+
+@aws_app.command("seed")
+def aws_seed(
+    prefix: Annotated[
+        str | None, typer.Option(help="Table name prefix (default $SUPPORT_AGENT_TABLE_PREFIX).")
+    ] = None,
+):
+    """Load data/ into the DynamoDB tables. Idempotent; uses your default AWS credentials."""
+    from .aws.dynamo import seed, table_name
+
+    for entity, n in seed(prefix).items():
+        console.print(f"[green]OK[/] {n:>3} items -> {table_name(entity, prefix)}")
 
 
 def _print_result(r: TriageResult) -> None:
